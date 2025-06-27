@@ -11,9 +11,20 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import co.feip.fefu2025.data.repository.RepositoryImpl
+import co.feip.fefu2025.data.source.local.AppDatabase
+import co.feip.fefu2025.navigation.AppNavHost
+import co.feip.fefu2025.presentation.list.RepositoriesViewModel
 import co.feip.fefu2025.ui.theme.FEFU2025AndroidBaseRepoTheme
 
 class MainActivity : ComponentActivity() {
+
+    private val database by lazy { AppDatabase.getDatabase(this) }
+
+    private val repository by lazy { RepositoryImpl(database.repositoryDao()) }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -25,6 +36,9 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
+                val viewModelFactory = RepositoriesViewModelFactory(repository)
+                AppNavHost(viewModelFactory = viewModelFactory)
+
             }
         }
     }
@@ -43,5 +57,16 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 fun GreetingPreview() {
     FEFU2025AndroidBaseRepoTheme {
         Greeting("Android")
+
+class RepositoriesViewModelFactory(
+    private val repository: RepositoryImpl
+) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(RepositoriesViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return RepositoriesViewModel(repository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
+
     }
 }
